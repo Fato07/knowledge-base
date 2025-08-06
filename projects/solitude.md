@@ -83,6 +83,13 @@ tags:
 - authenticates_with [[WorkOS]]
 - deploys_to [[Google Cloud Run]]
 - monitors_with [[Honeycomb]]
+- developed_with [[Claude Code Setup]]
+- architecture_in [[Solitude Architecture]]
+- logged_in [[Solitude Development Log]]
+- tested_with [[Docker Compose]]
+- secured_with [[JWT Authentication]]
+- follows [[Microservices Architecture]]
+- tracked_in [[Git Repository]]
 
 ## Resources
 
