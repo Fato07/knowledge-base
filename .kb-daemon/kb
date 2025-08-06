@@ -96,22 +96,57 @@ for cat, count in sorted(stats['events_by_category'].items(), key=lambda x: x[1]
         fi
         ;;
     
-    graph)
-        echo -e "${BLUE}🕸️ Viewing knowledge graph...${NC}"
-        cd /Users/fathindosunmu/DEV/knowledge-base
-        if command -v uvx &> /dev/null; then
-            uvx basic-memory graph
-        else
-            echo -e "${YELLOW}⚠️ uvx not found${NC}"
-        fi
+    graph|view)
+        echo -e "${YELLOW}⚠️  No graph visualization command exists${NC}"
+        echo ""
+        echo "Basic Memory is an MCP server, not a visualization tool."
+        echo ""
+        echo "To explore your knowledge graph:"
+        echo "  1. Ask Claude directly (it queries via MCP)"
+        echo "  2. Use Obsidian for visual graph view"
+        echo "  3. Search with: ${GREEN}kb query 'term'${NC}"
         ;;
     
     query)
         shift
-        echo -e "${BLUE}🔍 Querying knowledge base...${NC}"
+        echo -e "${YELLOW}⚠️  Basic Memory doesn't have a direct query command${NC}"
+        echo ""
+        echo "To query your knowledge base:"
+        echo ""
+        echo "Option 1: Use Claude with MCP (recommended)"
+        echo "  • Basic Memory runs as an MCP server"
+        echo "  • Claude queries it directly through MCP"
+        echo "  • Just ask Claude about your knowledge"
+        echo ""
+        echo "Option 2: Search markdown files directly"
+        echo "  ${GREEN}grep -r '$*' .${NC}"
+        echo ""
+        echo "Searching for: $*"
+        echo "-" * 40
+        cd /Users/fathindosunmu/DEV/knowledge-base
+        grep -r --include="*.md" -i "$*" . 2>/dev/null | head -20
+        ;;
+    
+    list|entities)
+        echo -e "${BLUE}📃 Listing knowledge base entries...${NC}"
+        cd /Users/fathindosunmu/DEV/knowledge-base
+        echo ""
+        echo "Recent entries:"
+        ls -lt **/*.md 2>/dev/null | head -20 || ls -lt *.md 2>/dev/null | head -20
+        echo ""
+        echo "Total: $(find . -name '*.md' -type f | wc -l) markdown files"
+        ;;
+    
+    stats|info)
+        echo -e "${BLUE}📊 Knowledge base statistics...${NC}"
         cd /Users/fathindosunmu/DEV/knowledge-base
         if command -v uvx &> /dev/null; then
-            uvx basic-memory query "$@"
+            # Try to get stats
+            echo "Markdown files: $(find . -name '*.md' -type f | wc -l)"
+            echo "Directories: $(find . -type d -name '[!.]*' | wc -l)"
+            echo ""
+            echo "Recent entries:"
+            ls -lt *.md 2>/dev/null | head -5
         else
             echo -e "${YELLOW}⚠️ uvx not found${NC}"
         fi
@@ -152,27 +187,31 @@ for cat, count in sorted(stats['events_by_category'].items(), key=lambda x: x[1]
     help|--help|-h|"")
         echo -e "${BLUE}🧠 KB - Knowledge Base Intelligence System${NC}"
         echo ""
+        echo "A two-part system:"
+        echo "  1. KB Daemon - Captures your development activity"
+        echo "  2. Basic Memory - MCP server that Claude queries"
+        echo ""
         echo "Usage: kb <command> [options]"
         echo ""
         echo "Commands:"
-        echo "  === KB Daemon ==="
-        printf "  ${GREEN}%-10s${NC} %s\n" "review" "Run daily review interface"
+        echo "  === KB Daemon (Capture & Review) ==="
+        printf "  ${GREEN}%-10s${NC} %s\n" "review" "Review and approve captured events"
         printf "  ${GREEN}%-10s${NC} %s\n" "start" "Start the KB daemon"
         printf "  ${GREEN}%-10s${NC} %s\n" "stop" "Stop the KB daemon"
-        printf "  ${GREEN}%-10s${NC} %s\n" "status" "Check daemon status"
-        printf "  ${GREEN}%-10s${NC} %s\n" "log" "View captured logs"
-        printf "  ${GREEN}%-10s${NC} %s\n" "capture" "Manual capture: kb capture 'learned about X'"
-        printf "  ${GREEN}%-10s${NC} %s\n" "stats" "Show statistics"
+        printf "  ${GREEN}%-10s${NC} %s\n" "status" "Check if daemon is running"
+        printf "  ${GREEN}%-10s${NC} %s\n" "log" "View captured events"
+        printf "  ${GREEN}%-10s${NC} %s\n" "capture" "Manual entry: kb capture 'learned X'"
+        printf "  ${GREEN}%-10s${NC} %s\n" "stats" "Show capture statistics"
         echo ""
-        echo "  === Basic Memory ==="
-        printf "  ${GREEN}%-10s${NC} %s\n" "sync" "Sync markdown files to graph"
-        printf "  ${GREEN}%-10s${NC} %s\n" "graph" "View knowledge graph"
-        printf "  ${GREEN}%-10s${NC} %s\n" "query" "Query knowledge: kb query 'what did I learn?'"
+        echo "  === Knowledge Base (Search & Sync) ==="
+        printf "  ${GREEN}%-10s${NC} %s\n" "sync" "Sync markdown to Basic Memory database"
+        printf "  ${GREEN}%-10s${NC} %s\n" "query" "Search files: kb query 'search term'"
+        printf "  ${GREEN}%-10s${NC} %s\n" "list" "List recent knowledge entries"
         echo ""
-        echo "  === Combined ==="
-        printf "  ${GREEN}%-10s${NC} %s\n" "full" "🌟 Daily workflow (review + sync)"
-        printf "  ${GREEN}%-10s${NC} %s\n" "commit" "📚 Commit KB changes to git"
-        printf "  ${GREEN}%-10s${NC} %s\n" "backup" "📦 Manage backups (list/clean/restore)"
+        echo "  === Workflow ==="
+        printf "  ${GREEN}%-10s${NC} %s\n" "full" "🌟 Complete workflow (review + sync)"
+        printf "  ${GREEN}%-10s${NC} %s\n" "commit" "📚 Commit changes to git"
+        printf "  ${GREEN}%-10s${NC} %s\n" "backup" "📦 Manage backups"
         echo ""
         echo "Examples:"
         echo "  kb review              # Review today's captures"
