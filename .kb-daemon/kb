@@ -86,22 +86,93 @@ for cat, count in sorted(stats['events_by_category'].items(), key=lambda x: x[1]
         cd "$KB_DAEMON_PATH" && bash kb_full_sync.sh
         ;;
     
+    sync)
+        echo -e "${BLUE}📚 Syncing to knowledge graph...${NC}"
+        cd /Users/fathindosunmu/DEV/knowledge-base
+        if command -v uvx &> /dev/null; then
+            uvx basic-memory sync
+        else
+            echo -e "${YELLOW}⚠️ uvx not found - install with: curl -LsSf https://astral.sh/uv/install.sh | sh${NC}"
+        fi
+        ;;
+    
+    graph)
+        echo -e "${BLUE}🕸️ Viewing knowledge graph...${NC}"
+        cd /Users/fathindosunmu/DEV/knowledge-base
+        if command -v uvx &> /dev/null; then
+            uvx basic-memory graph
+        else
+            echo -e "${YELLOW}⚠️ uvx not found${NC}"
+        fi
+        ;;
+    
+    query)
+        shift
+        echo -e "${BLUE}🔍 Querying knowledge base...${NC}"
+        cd /Users/fathindosunmu/DEV/knowledge-base
+        if command -v uvx &> /dev/null; then
+            uvx basic-memory query "$@"
+        else
+            echo -e "${YELLOW}⚠️ uvx not found${NC}"
+        fi
+        ;;
+    
+    commit|sync-git|push)
+        echo -e "${BLUE}📚 Syncing to Git...${NC}"
+        cd "$KB_DAEMON_PATH" && bash git_sync.sh
+        ;;
+    
+    backup|backups)
+        shift
+        case "$1" in
+            list|"")
+                echo -e "${BLUE}📦 Listing backups...${NC}"
+                cd "$KB_DAEMON_PATH" && python3 backup_manager.py list
+                ;;
+            clean|rotate)
+                echo -e "${YELLOW}🧹 Cleaning old backups...${NC}"
+                cd "$KB_DAEMON_PATH" && python3 backup_manager.py rotate
+                ;;
+            restore)
+                if [ -n "$2" ]; then
+                    echo -e "${GREEN}🔄 Restoring backup: $2${NC}"
+                    cd "$KB_DAEMON_PATH" && python3 backup_manager.py restore --backup "$2"
+                else
+                    echo -e "${RED}Please specify backup name${NC}"
+                    echo "Usage: kb backup restore <backup_name>"
+                fi
+                ;;
+            *)
+                echo -e "${RED}Unknown backup command: $1${NC}"
+                echo "Usage: kb backup [list|clean|restore <name>]"
+                ;;
+        esac
+        ;;
+    
     help|--help|-h|"")
         echo -e "${BLUE}🧠 KB - Knowledge Base Intelligence System${NC}"
         echo ""
         echo "Usage: kb <command> [options]"
         echo ""
         echo "Commands:"
-        echo "  ${GREEN}review${NC}    Run daily review interface"
-        echo "  ${GREEN}full${NC}      Full sync (review + graph update)"
-        echo "  ${GREEN}start${NC}     Start the KB daemon"
-        echo "  ${GREEN}stop${NC}      Stop the KB daemon"
-        echo "  ${GREEN}status${NC}    Check daemon status"
-        echo "  ${GREEN}log${NC}       View captured logs"
-        echo "  ${GREEN}capture${NC}   Manual capture: kb capture 'learned about X'"
-        echo "  ${GREEN}stats${NC}     Show statistics"
-        echo "  ${GREEN}test${NC}      Test the system"
-        echo "  ${GREEN}help${NC}      Show this help"
+        echo "  === KB Daemon ==="
+        printf "  ${GREEN}%-10s${NC} %s\n" "review" "Run daily review interface"
+        printf "  ${GREEN}%-10s${NC} %s\n" "start" "Start the KB daemon"
+        printf "  ${GREEN}%-10s${NC} %s\n" "stop" "Stop the KB daemon"
+        printf "  ${GREEN}%-10s${NC} %s\n" "status" "Check daemon status"
+        printf "  ${GREEN}%-10s${NC} %s\n" "log" "View captured logs"
+        printf "  ${GREEN}%-10s${NC} %s\n" "capture" "Manual capture: kb capture 'learned about X'"
+        printf "  ${GREEN}%-10s${NC} %s\n" "stats" "Show statistics"
+        echo ""
+        echo "  === Basic Memory ==="
+        printf "  ${GREEN}%-10s${NC} %s\n" "sync" "Sync markdown files to graph"
+        printf "  ${GREEN}%-10s${NC} %s\n" "graph" "View knowledge graph"
+        printf "  ${GREEN}%-10s${NC} %s\n" "query" "Query knowledge: kb query 'what did I learn?'"
+        echo ""
+        echo "  === Combined ==="
+        printf "  ${GREEN}%-10s${NC} %s\n" "full" "🌟 Daily workflow (review + sync)"
+        printf "  ${GREEN}%-10s${NC} %s\n" "commit" "📚 Commit KB changes to git"
+        printf "  ${GREEN}%-10s${NC} %s\n" "backup" "📦 Manage backups (list/clean/restore)"
         echo ""
         echo "Examples:"
         echo "  kb review              # Review today's captures"
