@@ -1,0 +1,118 @@
+#!/bin/bash
+# KB - Universal Knowledge Base Command
+# Install this to /usr/local/bin/kb for system-wide access
+
+KB_DAEMON_PATH="/Users/fathindosunmu/DEV/knowledge-base/.kb-daemon"
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Main command handler
+case "$1" in
+    review)
+        echo -e "${BLUE}📊 Opening KB Daily Review...${NC}"
+        cd "$KB_DAEMON_PATH" && python3 interface/cli.py review
+        ;;
+    
+    start)
+        echo -e "${GREEN}🚀 Starting KB Daemon...${NC}"
+        cd "$KB_DAEMON_PATH" && python3 kb_daemon.py start
+        ;;
+    
+    stop)
+        echo -e "${RED}⏹️  Stopping KB Daemon...${NC}"
+        cd "$KB_DAEMON_PATH" && python3 kb_daemon.py stop
+        ;;
+    
+    status)
+        echo -e "${BLUE}📈 KB Daemon Status${NC}"
+        if pgrep -f "kb_daemon.py" > /dev/null; then
+            echo -e "${GREEN}✓ Daemon is running${NC}"
+            echo ""
+            ps aux | grep -E "kb_daemon|kb-daemon" | grep -v grep
+        else
+            echo -e "${YELLOW}○ Daemon is not running${NC}"
+        fi
+        
+        # Show recent captures
+        LATEST_LOG=$(ls -t "$KB_DAEMON_PATH/logs"/shadow_*.json 2>/dev/null | head -1)
+        if [ -n "$LATEST_LOG" ]; then
+            COUNT=$(grep -c '{' "$LATEST_LOG" 2>/dev/null || echo 0)
+            echo ""
+            echo -e "${BLUE}Recent captures: ${COUNT} events${NC}"
+        fi
+        ;;
+    
+    log|logs|view)
+        echo -e "${BLUE}📋 KB Captured Data${NC}"
+        cd "$KB_DAEMON_PATH" && python3 view_logs.py
+        ;;
+    
+    capture)
+        # Manual capture command
+        shift
+        echo -e "${GREEN}✏️  Manual KB Entry${NC}"
+        echo "{\"type\":\"manual\",\"timestamp\":\"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\",\"data\":{\"note\":\"$*\"},\"importance\":7}" >> ~/.kb-daemon/capture/manual_events.jsonl
+        echo "Entry captured: $*"
+        ;;
+    
+    test)
+        echo -e "${BLUE}🧪 Testing KB System...${NC}"
+        cd "$KB_DAEMON_PATH" && python3 kb_daemon.py test
+        ;;
+    
+    stats)
+        echo -e "${BLUE}📊 KB Statistics${NC}"
+        cd "$KB_DAEMON_PATH" && python3 -c "
+from storage.db_manager import DatabaseManager
+from pathlib import Path
+db = DatabaseManager(Path.home() / '.kb-daemon' / 'storage' / 'kb_store.db')
+stats = db.get_statistics()
+print(f'  Total Events: {stats[\"total_events\"]}')
+print(f'  Avg Importance: {stats[\"average_importance\"]}/10')
+print(f'  Pending Reviews: {stats[\"pending_entries\"]}')
+print('\nTop Categories:')
+for cat, count in sorted(stats['events_by_category'].items(), key=lambda x: x[1], reverse=True)[:5]:
+    print(f'  - {cat}: {count}')
+"
+        ;;
+    
+    full|fullsync|sync-all)
+        echo -e "${BLUE}🔄 Full Sync - Review + Graph Update${NC}"
+        cd "$KB_DAEMON_PATH" && bash kb_full_sync.sh
+        ;;
+    
+    help|--help|-h|"")
+        echo -e "${BLUE}🧠 KB - Knowledge Base Intelligence System${NC}"
+        echo ""
+        echo "Usage: kb <command> [options]"
+        echo ""
+        echo "Commands:"
+        echo "  ${GREEN}review${NC}    Run daily review interface"
+        echo "  ${GREEN}full${NC}      Full sync (review + graph update)"
+        echo "  ${GREEN}start${NC}     Start the KB daemon"
+        echo "  ${GREEN}stop${NC}      Stop the KB daemon"
+        echo "  ${GREEN}status${NC}    Check daemon status"
+        echo "  ${GREEN}log${NC}       View captured logs"
+        echo "  ${GREEN}capture${NC}   Manual capture: kb capture 'learned about X'"
+        echo "  ${GREEN}stats${NC}     Show statistics"
+        echo "  ${GREEN}test${NC}      Test the system"
+        echo "  ${GREEN}help${NC}      Show this help"
+        echo ""
+        echo "Examples:"
+        echo "  kb review              # Review today's captures"
+        echo "  kb capture 'fixed auth bug'  # Manual entry"
+        echo "  kb status              # Check if daemon is running"
+        echo "  kb log                 # View recent activity"
+        ;;
+    
+    *)
+        echo -e "${RED}Unknown command: $1${NC}"
+        echo "Use 'kb help' for available commands"
+        exit 1
+        ;;
+esac

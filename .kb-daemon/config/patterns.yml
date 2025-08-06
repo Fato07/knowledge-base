@@ -1,0 +1,141 @@
+# Pattern Detection Configuration
+# Defines patterns for intelligent activity categorization
+
+detection_patterns:
+  debugging:
+    indicators:
+      - error_in_output
+      - multiple_test_runs
+      - stack_trace_present
+      - search_for_error_message
+      - consecutive_failed_commands
+    keywords:
+      - "error"
+      - "failed"
+      - "exception"
+      - "undefined"
+      - "cannot"
+      - "ENOENT"
+      - "TypeError"
+      - "SyntaxError"
+    
+  learning:
+    indicators:
+      - documentation_access
+      - tutorial_sites
+      - new_library_usage
+      - example_code_copied
+      - readme_viewing
+    urls:
+      - "docs."
+      - "documentation"
+      - "stackoverflow.com"
+      - "github.com/.*/(README|docs)"
+      - "npmjs.com"
+      - "pypi.org"
+      - "developer.mozilla.org"
+  
+  feature_development:
+    indicators:
+      - new_branch_created
+      - multiple_file_creation
+      - test_file_creation
+      - readme_update
+    branch_patterns:
+      - "feature/"
+      - "feat/"
+      - "add/"
+      - "new/"
+    file_patterns:
+      - "*.test.*"
+      - "*.spec.*"
+      - "__tests__"
+      - "test_*.py"
+  
+  refactoring:
+    indicators:
+      - multiple_file_changes
+      - no_feature_additions
+      - test_still_passing
+      - improved_metrics
+    branch_patterns:
+      - "refactor/"
+      - "cleanup/"
+      - "optimize/"
+    commit_patterns:
+      - "refactor:"
+      - "cleanup:"
+      - "optimize:"
+      
+  bugfix:
+    indicators:
+      - test_failure_then_success
+      - single_file_focus
+      - error_message_in_commit
+    branch_patterns:
+      - "fix/"
+      - "bugfix/"
+      - "hotfix/"
+    commit_patterns:
+      - "fix:"
+      - "bugfix:"
+      - "hotfix:"
+      
+  configuration:
+    indicators:
+      - config_file_changes
+      - env_file_changes
+      - package_json_changes
+    file_patterns:
+      - "*.config.*"
+      - "*.conf"
+      - ".env*"
+      - "package.json"
+      - "Cargo.toml"
+      - "pyproject.toml"
+      - "docker-compose.*"
+      
+importance_scoring:
+  # Factors that increase importance (1-10 scale)
+  factors:
+    new_feature: 8
+    bug_fixed: 7
+    breaking_change: 9
+    new_dependency: 6
+    algorithm_change: 8
+    api_change: 9
+    performance_improvement: 7
+    security_fix: 10
+    documentation: 5
+    test_added: 6
+    configuration: 4
+    formatting: 2
+    
+command_importance:
+  # Specific commands and their base importance
+  high:  # 7-10
+    - "npm install"
+    - "pip install"
+    - "cargo add"
+    - "docker build"
+    - "kubectl apply"
+    - "terraform apply"
+    - "git merge"
+    - "git rebase"
+    
+  medium:  # 4-6
+    - "npm test"
+    - "pytest"
+    - "cargo test"
+    - "git commit"
+    - "git push"
+    - "make"
+    
+  low:  # 1-3
+    - "ls"
+    - "cd"
+    - "pwd"
+    - "echo"
+    - "cat"
+    - "git status"
+    - "git diff"

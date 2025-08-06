@@ -1,0 +1,28 @@
+#!/bin/bash
+# KB Daemon post-merge hook - tracks external changes
+
+# Get merge information
+BRANCH=$(git branch --show-current)
+HEAD_BEFORE=$1
+HEAD_AFTER=$(git rev-parse HEAD)
+
+# Get list of commits in the merge
+NEW_COMMITS=$(git rev-list $HEAD_BEFORE..$HEAD_AFTER)
+
+# Create event JSON
+EVENT_JSON=$(cat <<EOF
+{
+    "type": "git_merge",
+    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "data": {
+        "branch": "$BRANCH",
+        "head_before": "$HEAD_BEFORE",
+        "head_after": "$HEAD_AFTER",
+        "commits_merged": "$NEW_COMMITS"
+    }
+}
+EOF
+)
+
+# Send to KB daemon
+echo "$EVENT_JSON" >> ~/.kb-daemon/capture/git_events.jsonl

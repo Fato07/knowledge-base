@@ -1,0 +1,25 @@
+#!/bin/bash
+# KB Daemon post-checkout hook
+
+PREV_HEAD=$1
+NEW_HEAD=$2
+BRANCH_CHECKOUT=$3
+
+if [ "$BRANCH_CHECKOUT" = "1" ]; then
+    NEW_BRANCH=$(git branch --show-current)
+    
+    EVENT_JSON=$(cat <<EOF
+{
+    "type": "git_checkout",
+    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "data": {
+        "prev_head": "$PREV_HEAD",
+        "new_head": "$NEW_HEAD",
+        "branch": "$NEW_BRANCH"
+    }
+}
+EOF
+)
+    
+    echo "$EVENT_JSON" >> ~/.kb-daemon/capture/git_events.jsonl
+fi

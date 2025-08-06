@@ -1,0 +1,93 @@
+#!/bin/bash
+# Universal KB command wrapper
+# Handles both KB Daemon and Basic Memory commands
+
+KB_DAEMON_PATH="/Users/fathindosunmu/DEV/knowledge-base/.kb-daemon"
+KB_BASE_PATH="/Users/fathindosunmu/DEV/knowledge-base"
+
+# Color codes
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+case "$1" in
+    # KB Daemon commands
+    review|start|stop|status|log|logs|view|capture|test|stats)
+        # Forward to KB Daemon kb command
+        "$KB_DAEMON_PATH/kb" "$@"
+        ;;
+    
+    # Basic Memory commands (using uvx)
+    sync)
+        echo -e "${BLUE}📚 Syncing markdown files to knowledge graph...${NC}"
+        cd "$KB_BASE_PATH"
+        if command -v uvx &> /dev/null; then
+            uvx basic-memory sync
+        else
+            echo -e "${YELLOW}⚠️  uvx not found${NC}"
+            echo "Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"
+        fi
+        ;;
+    
+    graph)
+        echo -e "${BLUE}🕸️  Viewing knowledge graph...${NC}"
+        cd "$KB_BASE_PATH"
+        if command -v uvx &> /dev/null; then
+            uvx basic-memory graph
+        else
+            echo -e "${YELLOW}⚠️  uvx not found${NC}"
+        fi
+        ;;
+    
+    query)
+        shift
+        echo -e "${BLUE}🔍 Querying knowledge base...${NC}"
+        cd "$KB_BASE_PATH"
+        if command -v uvx &> /dev/null; then
+            uvx basic-memory query "$@"
+        else
+            echo -e "${YELLOW}⚠️  uvx not found${NC}"
+        fi
+        ;;
+    
+    # Combined commands
+    full|fullsync)
+        echo -e "${GREEN}🔄 Full Sync - Review + Graph${NC}"
+        # First review
+        "$KB_DAEMON_PATH/kb" review
+        # Then sync
+        echo ""
+        echo -e "${BLUE}Syncing to graph...${NC}"
+        cd "$KB_BASE_PATH"
+        if command -v uvx &> /dev/null; then
+            uvx basic-memory sync
+            echo -e "${GREEN}✅ Full sync complete!${NC}"
+        else
+            echo -e "${YELLOW}⚠️  Graph sync skipped (uvx not found)${NC}"
+        fi
+        ;;
+    
+    help|--help|-h|"")
+        echo -e "${BLUE}🧠 Universal KB Command${NC}"
+        echo ""
+        echo "KB Daemon Commands:"
+        echo "  kb review    - Review captured events"
+        echo "  kb status    - Check daemon status"
+        echo "  kb log       - View captured data"
+        echo "  kb capture   - Manual capture"
+        echo ""
+        echo "Basic Memory Commands:"
+        echo "  kb sync      - Sync markdown to graph"
+        echo "  kb graph     - View knowledge graph"
+        echo "  kb query     - Query knowledge base"
+        echo ""
+        echo "Combined:"
+        echo "  kb full      - Review + sync (recommended daily)"
+        ;;
+    
+    *)
+        echo "Unknown command: $1"
+        echo "Use 'kb help' for available commands"
+        ;;
+esac

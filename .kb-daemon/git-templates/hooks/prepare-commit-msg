@@ -1,0 +1,20 @@
+#!/bin/bash
+# KB Daemon prepare-commit-msg hook
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+# Add context comment (will be stripped from actual commit)
+if [ -z "$COMMIT_SOURCE" ]; then
+    # Get current context
+    CURRENT_DIR=$(pwd)
+    CURRENT_TIME=$(date +"%H:%M")
+    
+    # Check if we're in a debugging session (recent test failures)
+    if [ -f .kb_daemon_test_status ]; then
+        TEST_STATUS=$(cat .kb_daemon_test_status)
+        if [ "$TEST_STATUS" = "failed" ]; then
+            echo "# KB: Likely fixing test failures" >> "$COMMIT_MSG_FILE"
+        fi
+    fi
+fi

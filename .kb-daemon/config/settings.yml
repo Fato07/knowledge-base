@@ -1,0 +1,81 @@
+# KB Daemon Configuration
+# This file controls the intelligent KB automation system
+
+daemon:
+  enabled: true
+  process_interval: 1800  # 30 minutes
+  shadow_mode: false  # Direct database storage (exit shadow mode)
+  
+capture:
+  shell_commands: true
+  git_activity: true
+  file_changes: true
+  claude_code: true
+  external_changes: true
+  
+  # Commands to track automatically
+  track_commands:
+    - npm
+    - yarn
+    - pnpm
+    - cargo
+    - pytest
+    - python
+    - node
+    - docker
+    - kubectl
+    - terraform
+    - ansible
+    - git
+    - make
+    - curl
+    - wget
+    
+processing:
+  use_local_llm: false  # Using rule-based processing (no LLM needed)
+  # llm_model: "claude-3-haiku-20240307"  # Reserved for Phase 2
+  fallback_to_rules: true  # Always use rule-based in Phase 1
+  batch_size: 100
+  min_importance: 3  # 1-10 scale, only log important events
+  
+privacy:
+  sanitize_secrets: true
+  ignore_patterns:
+    - ".env"
+    - "*.key"
+    - "*.pem"
+    - "credentials"
+    - "secrets"
+    - "password"
+    - "token"
+  local_only: true
+  
+review:
+  daily_reminder: "09:00"
+  max_suggestions: 20
+  require_approval: true
+  auto_approve_threshold: 8  # Auto-approve high confidence entries
+  
+storage:
+  backend: "sqlite+markdown"
+  location: "/Users/fathindosunmu/DEV/knowledge-base/.kb-daemon/storage"
+  backup: true
+  retention_days: 365
+  
+git:
+  track_external_changes: true
+  differentiate_authors: true
+  
+  pr_review:
+    auto_capture: true
+    prompt_for_learning: false  # Don't interrupt during PR reviews
+    link_discussions: true
+  
+  merge_tracking:
+    extract_patterns: true
+    detect_breaking_changes: true
+    
+  categorization:
+    tag_external: true
+    track_adaptations: true
+    note_decisions: true

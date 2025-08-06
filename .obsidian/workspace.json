@@ -11,10 +11,14 @@
             "id": "161a316d20d78363",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "projects/projects-hub.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "projects-hub"
             }
           }
         ]
@@ -89,6 +93,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "projects/projects-hub.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -98,7 +103,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks"
+              "title": "Backlinks for projects-hub"
             }
           },
           {
@@ -107,11 +112,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "projects/projects-hub.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links"
+              "title": "Outgoing links from projects-hub"
             }
           },
           {
@@ -132,9 +138,11 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {},
+              "state": {
+                "file": "projects/projects-hub.md"
+              },
               "icon": "lucide-list",
-              "title": "Outline"
+              "title": "Outline of projects-hub"
             }
           }
         ]
@@ -156,20 +164,28 @@
   },
   "active": "161a316d20d78363",
   "lastOpenFiles": [
+    "projects/solitude-dev-log.md",
+    "architecture/20250807_Configuration_change_packagejson.md",
+    "daily/20250807_Pattern_refactoring.md",
     "projects/projects-hub.md",
+    "projects/solitude.md",
+    "projects/TEMPLATE.md",
+    "tools/knowledge-connections.md",
+    "tools/claude-code-setup.md",
+    "BASIC_MEMORY_TESTS.md",
+    "QUICK_REFERENCE.md",
+    "Untitled.canvas",
+    "tools/COMPLETE_SETUP_GUIDE.md",
+    "projects/kb-enhancement-roadmap.md",
     "projects/database-patterns-and-best-practices.md",
     "KB_QUICK_REFERENCE.txt",
     "projects/database-architecture.md",
     "tools/kb-mastery-guide.md",
     "tools/tools-index.md",
-    "tools/knowledge-connections.md",
-    "projects/kb-enhancement-roadmap.md",
     "architecture/solitude-architecture.md",
     "projects/kb-command-progress.md",
     "Untitled 2.canvas",
     "Untitled 1.canvas",
-    "2025-08-06.md",
-    "Untitled.canvas",
-    "tools/COMPLETE_SETUP_GUIDE.md"
+    "2025-08-06.md"
   ]
 }

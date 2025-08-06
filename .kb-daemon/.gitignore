@@ -1,0 +1,52 @@
+# KB Daemon - Git Ignore File
+
+# Logs (contain your activity data)
+logs/
+*.log
+
+# Database (contains your processed events)
+storage/*.db
+storage/*.db-journal
+
+# Captured events (raw data)
+/Users/fathindosunmu/.kb-daemon/
+~/.kb-daemon/
+
+# Shadow mode captures
+shadow_*.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Virtual environments
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Local configuration overrides
+config/local_settings.yml
+config/*.local.yml
+
+# Sensitive data
+*.key
+*.pem
+credentials.json
+secrets.yml

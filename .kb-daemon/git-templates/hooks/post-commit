@@ -1,0 +1,41 @@
+#!/bin/bash
+# KB Daemon post-commit hook
+
+# Get commit information
+COMMIT_HASH=$(git rev-parse HEAD)
+COMMIT_MSG=$(git log -1 --pretty=%B)
+BRANCH=$(git branch --show-current)
+CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
+
+# Detect commit type
+COMMIT_TYPE="general"
+if [[ "$COMMIT_MSG" =~ ^fix:|^bugfix: ]]; then
+    COMMIT_TYPE="bugfix"
+elif [[ "$COMMIT_MSG" =~ ^feat:|^feature: ]]; then
+    COMMIT_TYPE="feature"
+elif [[ "$COMMIT_MSG" =~ ^refactor: ]]; then
+    COMMIT_TYPE="refactor"
+elif [[ "$COMMIT_MSG" =~ ^docs: ]]; then
+    COMMIT_TYPE="documentation"
+elif [[ "$COMMIT_MSG" =~ ^test: ]]; then
+    COMMIT_TYPE="testing"
+fi
+
+# Create event JSON
+EVENT_JSON=$(cat <<EOF
+{
+    "type": "git_commit",
+    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "data": {
+        "hash": "$COMMIT_HASH",
+        "message": "$COMMIT_MSG",
+        "branch": "$BRANCH",
+        "commit_type": "$COMMIT_TYPE",
+        "files_changed": "$CHANGED_FILES"
+    }
+}
+EOF
+)
+
+# Send to KB daemon
+echo "$EVENT_JSON" >> ~/.kb-daemon/capture/git_events.jsonl

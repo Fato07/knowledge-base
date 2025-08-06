@@ -1,13 +1,81 @@
-# Basic Memory Knowledge Base
-*.db
-*.sqlite
-*.jsonl
-.DS_Store
-.basic-memory/
-__pycache__/
-*.pyc
+# Knowledge Base - Git Ignore
+# This file is for the main knowledge-base repository
 
-# IMPORTANT: Never commit secrets
-.env.secret
-*.secret
+# =======================
+# KB Daemon - Private Data
+# =======================
+# These contain your personal activity data
+.kb-daemon/logs/
+.kb-daemon/storage/*.db
+.kb-daemon/storage/*.db-journal
+.kb-daemon/backup_*/
+
+# Shadow captures (contain your activity)
+.kb-daemon/shadow_*.json
+.kb-daemon/*.log
+
+# =======================
+# Basic Memory - Generated
+# =======================
+# Graph database (can be regenerated from markdown)
+.basic-memory/
+*.db
+*.db-wal
+*.db-shm
+
+# =======================
+# OS Files
+# =======================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =======================
+# IDE Files
+# =======================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =======================
+# Temporary Files
+# =======================
+*.tmp
+*.bak
+*.backup
+.temp/
+
+# =======================
+# Python
+# =======================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.Python
+venv/
+env/
 .env
+
+# =======================
+# Sensitive Data
+# =======================
+*.key
+*.pem
+*.env
+.env.*
+credentials.json
+secrets.yml
+config/local_settings.yml
+
+# =======================
+# But KEEP These
+# =======================
+# !.kb-daemon/           # Keep the daemon code
+# !.kb-daemon/config/    # Keep configuration
+# !daily/*.md            # Keep all KB entries
+# !projects/*.md         # Keep all KB entries
+# !learning/*.md         # Keep all KB entries
+# !architecture/*.md     # Keep all KB entries
