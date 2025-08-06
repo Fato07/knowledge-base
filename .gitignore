@@ -1,0 +1,13 @@
+# Basic Memory Knowledge Base
+*.db
+*.sqlite
+*.jsonl
+.DS_Store
+.basic-memory/
+__pycache__/
+*.pyc
+
+# IMPORTANT: Never commit secrets
+.env.secret
+*.secret
+.env

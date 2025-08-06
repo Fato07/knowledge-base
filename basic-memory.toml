@@ -1,0 +1,21 @@
+# Basic Memory Configuration
+
+[project]
+name = "Personal Knowledge Base"
+base_path = "~/DEV/knowledge-base"
+
+[sync]
+enabled = true
+interval = 60  # seconds
+
+[database]
+path = "~/DEV/knowledge-base/.basic-memory/knowledge.db"
+
+[markdown]
+frontmatter = true
+auto_link = true
+preserve_formatting = true
+
+[logging]
+level = "INFO"
+file = "~/DEV/knowledge-base/.basic-memory/basic-memory.log"
