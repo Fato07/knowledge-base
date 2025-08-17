@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from capture.git_hooks import GitHooks
 from capture.shell_monitor import ShellMonitor
 from capture.file_watcher import FileWatcher
+from capture.project_detector import ProjectDetector
 from process.categorizer import ActivityCategorizer
 from process.summarizer import Summarizer
 from storage.db_manager import DatabaseManager
@@ -49,6 +50,10 @@ class KBDaemon:
         self.git_hooks = GitHooks(self.capture_queue, self.config['git'], self.base_path)
         self.shell_monitor = ShellMonitor(self.capture_queue, self.config['capture'], self.base_path)
         self.file_watcher = FileWatcher(self.capture_queue, self.config['capture'], self.base_path)
+        
+        # Initialize project detector
+        self.project_detector = ProjectDetector(self.base_path)
+        self.current_project = None
         
         self.running = False
         
@@ -136,6 +141,31 @@ class KBDaemon:
     def _process_events(self, events: List[Dict]):
         """Process a batch of events"""
         self.logger.info(f"Processing {len(events)} events")
+        
+        # Add project context to each event
+        for event in events:
+            # Detect project from event path if available
+            event_path = event.get('data', {}).get('working_dir') or event.get('data', {}).get('path')
+            if event_path:
+                project = self.project_detector.detect_project(Path(event_path))
+            else:
+                project = self.project_detector.detect_project()
+            
+            # Add project context
+            event['project'] = {
+                'name': project['name'],
+                'type': project['type'],
+                'path': project['path']
+            }
+            
+            # Track project switches
+            if self.current_project and self.current_project['name'] != project['name']:
+                switch_event = self.project_detector.track_project_switch(
+                    self.current_project, project
+                )
+                events.append(switch_event)
+            
+            self.current_project = project
         
         # Categorize events
         categorized = self.categorizer.categorize_batch(events)
