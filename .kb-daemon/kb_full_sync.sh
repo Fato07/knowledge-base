@@ -1,11 +1,11 @@
 #!/bin/bash
-# KB Full Sync - Review captured events AND sync to graph
+# KB Full Sync - Review + Graph Update
 
 echo "======================================"
 echo "🔄 KB FULL SYNC - Review + Graph Update"
 echo "======================================"
 
-# Step 1: Run daily review
+# Step 1: Run the review
 echo ""
 echo "📊 Step 1: Running daily review..."
 cd /Users/fathindosunmu/DEV/knowledge-base/.kb-daemon
@@ -15,25 +15,29 @@ python3 interface/cli.py review
 echo ""
 echo "📈 Step 2: Syncing to knowledge graph..."
 
-# Check if basic-memory is available via uvx
+# Check if uvx is available (Basic Memory's tool)
 if command -v uvx &> /dev/null; then
-    echo "Found uvx, syncing to Basic Memory..."
+    echo "Found uvx, syncing with Basic Memory..."
     cd /Users/fathindosunmu/DEV/knowledge-base
     
-    # Sync markdown files to graph
-    uvx basic-memory sync
+    # Run Basic Memory sync
+    uvx --from basic-memory sync
     
+    echo "✅ Graph sync complete!"
+    
+    # Optional: Show graph stats
     echo ""
-    echo "✅ Graph updated!"
-    echo ""
-    echo "📊 You can now:"
-    echo "  - Query with: uvx basic-memory query 'what did I learn today'"
-    echo "  - View graph: uvx basic-memory graph"
-    echo "  - Or use Claude with MCP to query your knowledge"
+    echo "📊 Graph statistics:"
+    uvx --from basic-memory stats 2>/dev/null || echo "Stats not available"
 else
-    echo "⚠️  uvx not found - Basic Memory not available"
-    echo "To install: curl -LsSf https://astral.sh/uv/install.sh | sh"
-    echo "Then: uv tool install basic-memory"
+    echo "⚠️  uvx not found"
+    echo "Basic Memory might not be installed."
+    echo ""
+    echo "To install Basic Memory:"
+    echo "  1. Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo "  2. Install Basic Memory: uvx basic-memory"
+    echo ""
+    echo "Graph sync skipped - only markdown files were created"
 fi
 
 echo ""

@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "82c3e29f7ef1c8f3",
+        "id": "e54421e1a32a95d8",
         "type": "tabs",
         "children": [
           {
-            "id": "161a316d20d78363",
+            "id": "806e42d79d926e93",
             "type": "leaf",
             "state": {
               "type": "graph",
@@ -36,7 +36,8 @@
             "state": {
               "type": "file-explorer",
               "state": {
-                "sortOrder": "alphabetical"
+                "sortOrder": "alphabetical",
+                "autoReveal": false
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -154,9 +155,13 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "161a316d20d78363",
+  "active": "806e42d79d926e93",
   "lastOpenFiles": [
+    "COMMIT_MESSAGE.md",
+    "cleanup.sh",
+    "tools/terraform-configuration-guide.md",
     "projects/projects-hub.md",
+    "projects/solitude-datasets.md",
     "architecture/solitude-architecture.md",
     "architecture/20250807_Configuration_change_packagejson.md",
     "daily/20250807_Pattern_refactoring.md",

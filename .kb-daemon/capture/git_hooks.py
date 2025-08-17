@@ -15,9 +15,10 @@ import re
 class GitHooks:
     """Manages git hook integration for intelligent capture"""
     
-    def __init__(self, capture_queue: Queue, config: Dict):
+    def __init__(self, capture_queue: Queue, config: Dict, base_path=None):
         self.capture_queue = capture_queue
         self.config = config
+        self.base_path = base_path or Path.home()
         self.my_email = self._get_git_email()
         
     def _get_git_email(self) -> str:
@@ -52,8 +53,12 @@ class GitHooks:
         
     def _create_post_commit_hook(self, hooks_dir: Path):
         """Create post-commit hook"""
-        hook_content = '''#!/bin/bash
+        capture_dir = self.base_path / "capture"
+        hook_content = f'''#!/bin/bash
 # KB Daemon post-commit hook
+
+# Set capture directory
+export KB_CAPTURE_DIR="{capture_dir}"
 
 # Get commit information
 COMMIT_HASH=$(git rev-parse HEAD)
@@ -91,8 +96,8 @@ EVENT_JSON=$(cat <<EOF
 EOF
 )
 
-# Send to KB daemon
-echo "$EVENT_JSON" >> ~/.kb-daemon/capture/git_events.jsonl
+# Send to KB daemon  
+echo "$EVENT_JSON" >> "$KB_CAPTURE_DIR/git_events.jsonl"
 '''
         
         hook_path = hooks_dir / "post-commit"
@@ -101,8 +106,12 @@ echo "$EVENT_JSON" >> ~/.kb-daemon/capture/git_events.jsonl
         
     def _create_post_merge_hook(self, hooks_dir: Path):
         """Create post-merge hook for tracking external changes"""
-        hook_content = '''#!/bin/bash
+        capture_dir = self.base_path / "capture"
+        hook_content = f'''#!/bin/bash
 # KB Daemon post-merge hook - tracks external changes
+
+# Set capture directory
+export KB_CAPTURE_DIR="{capture_dir}"
 
 # Get merge information
 BRANCH=$(git branch --show-current)
@@ -128,7 +137,7 @@ EOF
 )
 
 # Send to KB daemon
-echo "$EVENT_JSON" >> ~/.kb-daemon/capture/git_events.jsonl
+echo "$EVENT_JSON" >> "$KB_CAPTURE_DIR/git_events.jsonl"
 '''
         
         hook_path = hooks_dir / "post-merge"
@@ -137,8 +146,12 @@ echo "$EVENT_JSON" >> ~/.kb-daemon/capture/git_events.jsonl
         
     def _create_post_checkout_hook(self, hooks_dir: Path):
         """Create post-checkout hook for branch switches"""
-        hook_content = '''#!/bin/bash
+        capture_dir = self.base_path / "capture"
+        hook_content = f'''#!/bin/bash
 # KB Daemon post-checkout hook
+
+# Set capture directory
+export KB_CAPTURE_DIR="{capture_dir}"
 
 PREV_HEAD=$1
 NEW_HEAD=$2
@@ -160,7 +173,7 @@ if [ "$BRANCH_CHECKOUT" = "1" ]; then
 EOF
 )
     
-    echo "$EVENT_JSON" >> ~/.kb-daemon/capture/git_events.jsonl
+    echo "$EVENT_JSON" >> "$KB_CAPTURE_DIR/git_events.jsonl"
 fi
 '''
         

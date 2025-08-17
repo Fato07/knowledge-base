@@ -6,7 +6,7 @@ CLI Interface - Command line interface for KB daemon with smart review tracking
 import os
 import sys
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -19,10 +19,23 @@ from process.summarizer import Summarizer
 class CLI:
     """Command line interface for KB daemon"""
     
-    def __init__(self):
-        self.db = DatabaseManager(
-            Path.home() / ".kb-daemon" / "storage" / "kb_store.db"
-        )
+    def __init__(self, base_path=None):
+        # Use project database path if available, fallback to global
+        if base_path:
+            db_path = base_path / "storage" / "kb_store.db"
+        else:
+            # Try to detect if we're in a project directory
+            current_dir = Path.cwd()
+            if (current_dir / "storage" / "kb_store.db").exists():
+                db_path = current_dir / "storage" / "kb_store.db"
+            elif (current_dir.parent / "storage" / "kb_store.db").exists():
+                db_path = current_dir.parent / "storage" / "kb_store.db"
+            else:
+                # Fallback to global path
+                db_path = Path.home() / ".kb-daemon" / "storage" / "kb_store.db"
+        
+        self.db = DatabaseManager(db_path)
+        print(f"📊 Using database: {db_path}")
         self.summarizer = Summarizer({'use_local_llm': False})
         
     def daily_review(self):
@@ -139,7 +152,7 @@ class CLI:
                 'category': 'decision',
                 'content': decision,
                 'tags': ['decision'] + self._extract_tags({'description': decision}),
-                'timestamp': datetime.utcnow().isoformat() + 'Z'
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             entries.append(entry)
             
@@ -150,7 +163,7 @@ class CLI:
                 'category': 'problem_solved',
                 'content': f"**Problem:** {problem['problem']}\n\n**Solution:** {problem['solution']}",
                 'tags': ['problem', 'solution', 'debugging'],
-                'timestamp': datetime.utcnow().isoformat() + 'Z'
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             entries.append(entry)
             
@@ -162,7 +175,7 @@ class CLI:
                 'category': 'integration',
                 'content': self._format_external_changes(summary['external_changes']),
                 'tags': ['integration', 'team', 'external'],
-                'timestamp': datetime.utcnow().isoformat() + 'Z'
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             entries.append(entry)
             

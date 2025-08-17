@@ -46,9 +46,9 @@ class KBDaemon:
         self.summarizer = Summarizer(self.config['processing'])
         
         # Initialize capture modules
-        self.git_hooks = GitHooks(self.capture_queue, self.config['git'])
-        self.shell_monitor = ShellMonitor(self.capture_queue, self.config['capture'])
-        self.file_watcher = FileWatcher(self.capture_queue, self.config['capture'])
+        self.git_hooks = GitHooks(self.capture_queue, self.config['git'], self.base_path)
+        self.shell_monitor = ShellMonitor(self.capture_queue, self.config['capture'], self.base_path)
+        self.file_watcher = FileWatcher(self.capture_queue, self.config['capture'], self.base_path)
         
         self.running = False
         
@@ -177,7 +177,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="KB Daemon - Intelligent Knowledge Base Automation")
-    parser.add_argument('command', choices=['start', 'stop', 'status', 'review', 'test'],
+    parser.add_argument('command', choices=['start', 'stop', 'status', 'review', 'test', 'full'],
                        help='Command to execute')
     parser.add_argument('--config', help='Path to config file')
     
@@ -190,10 +190,67 @@ def main():
         # TODO: Implement proper daemon stop via PID file
         print("Stop command not yet implemented")
     elif args.command == 'status':
-        # TODO: Check if daemon is running
-        print("Status command not yet implemented")
+        # Check if daemon is running
+        daemon_running = False
+        try:
+            import psutil
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                if proc.info['cmdline'] and 'kb_daemon.py' in ' '.join(proc.info['cmdline']) and 'start' in ' '.join(proc.info['cmdline']):
+                    daemon_running = True
+                    break
+        except ImportError:
+            # If psutil not installed, use subprocess
+            result = subprocess.run(['pgrep', '-f', 'kb_daemon.py'], capture_output=True, text=True)
+            daemon_running = bool(result.stdout.strip())
+        except Exception:
+            # Fallback to subprocess if psutil fails
+            result = subprocess.run(['pgrep', '-f', 'kb_daemon.py'], capture_output=True, text=True)
+            daemon_running = bool(result.stdout.strip())
+        
+        # Get database statistics
+        base_path = Path(__file__).parent
+        db = DatabaseManager(base_path / "storage" / "kb_store.db")
+        stats = db.get_statistics()
+        
+        # Display status
+        print("📈 KB Daemon Status")
+        if daemon_running:
+            print("✅ Daemon is running")
+        else:
+            print("○ Daemon is not running")
+        
+        # Show recent captures from shadow logs
+        logs_dir = base_path / "logs"
+        shadow_logs = list(logs_dir.glob("shadow_*.json"))
+        recent_events = 0
+        if shadow_logs:
+            for log_file in shadow_logs:
+                try:
+                    with open(log_file) as f:
+                        events = json.load(f)
+                        recent_events += len(events)
+                except:
+                    pass
+        
+        print(f"\nRecent captures: {recent_events} events")
+        
+        if stats:
+            print(f"\n📊 Database Statistics:")
+            print(f"  Total events: {stats.get('total_events', 0)}")
+            print(f"  Average importance: {stats.get('average_importance', 0):.2f}/10")
+            pending = stats.get('pending_entries', 0)
+            if pending > 0:
+                print(f"  Pending reviews: {pending}")
+                print(f"\n💡 Run 'kb review' to process pending events")
     elif args.command == 'review':
-        cli = CLI()
+        # Determine base_path
+        if args.config:
+            daemon = KBDaemon(args.config)
+            base_path = daemon.base_path
+        else:
+            base_path = Path(__file__).parent
+        
+        cli = CLI(base_path)
         cli.daily_review()
     elif args.command == 'test':
         print("Testing KB Daemon configuration...")
@@ -202,6 +259,52 @@ def main():
         print("✓ Database initialized")
         print("✓ All modules loaded")
         print("\nKB Daemon is ready to start!")
+    elif args.command == 'full':
+        # Full sync: Review + Basic Memory sync
+        print("🔄 KB Full Sync - Review + Graph Update")
+        print("=" * 60)
+        
+        # Step 1: Run review
+        print("\n📊 Step 1: Running daily review...")
+        base_path = Path(__file__).parent
+        cli = CLI(base_path)
+        cli.daily_review()
+        
+        # Step 2: Sync to Basic Memory
+        print("\n📈 Step 2: Syncing to knowledge graph...")
+        import subprocess
+        kb_path = Path.home() / "DEV" / "knowledge-base"
+        
+        # Check if uvx is available
+        try:
+            subprocess.run(["which", "uvx"], check=True, capture_output=True)
+            print("Found uvx, syncing with Basic Memory...")
+            
+            # Change to knowledge-base directory and run sync
+            result = subprocess.run(
+                ["uvx", "--from", "basic-memory", "sync"],
+                cwd=kb_path,
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                print("✅ Graph sync complete!")
+            else:
+                print(f"⚠️  Graph sync failed: {result.stderr}")
+        except subprocess.CalledProcessError:
+            print("⚠️  uvx not found")
+            print("Basic Memory might not be installed.")
+            print("")
+            print("To install Basic Memory:")
+            print("  1. Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh")
+            print("  2. Run: uvx --from basic-memory sync")
+            print("")
+            print("Graph sync skipped - only markdown files were created")
+        
+        print("\n" + "=" * 60)
+        print("✅ Full sync complete!")
+        print("=" * 60)
 
 if __name__ == "__main__":
     main()

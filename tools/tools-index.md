@@ -52,3 +52,4 @@ tags:
 - configures [[Claude Code Setup]]
 - manages [[Basic Memory]]
 - supports [[Solitude Project]]
+[[Terraform Configuration Guide]]

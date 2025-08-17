@@ -5,7 +5,7 @@ Database Manager - Manages storage of KB events with review tracking
 
 import sqlite3
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
@@ -177,7 +177,7 @@ class DatabaseManager:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
-            review_date = datetime.utcnow().isoformat() + 'Z'
+            review_date = datetime.now(timezone.utc).isoformat()
             
             for event_id in event_ids:
                 cursor.execute('''
@@ -198,7 +198,7 @@ class DatabaseManager:
                 (review_date, events_reviewed, entries_created, entries_approved, entries_skipped)
                 VALUES (?, ?, ?, ?, ?)
             ''', (
-                datetime.utcnow().isoformat() + 'Z',
+                datetime.now(timezone.utc).isoformat(),
                 stats.get('events_reviewed', 0),
                 stats.get('entries_created', 0),
                 stats.get('entries_approved', 0),
@@ -214,7 +214,7 @@ class DatabaseManager:
             cursor = conn.cursor()
             
             from datetime import timedelta
-            threshold = (datetime.utcnow() - timedelta(hours=hours)).isoformat() + 'Z'
+            threshold = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
             
             cursor.execute('''
                 SELECT * FROM events 
@@ -246,7 +246,7 @@ class DatabaseManager:
             cursor = conn.cursor()
             
             from datetime import timedelta
-            threshold = (datetime.utcnow() - timedelta(days=days)).isoformat() + 'Z'
+            threshold = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
             
             cursor.execute('''
                 SELECT * FROM review_sessions 
@@ -341,7 +341,7 @@ class DatabaseManager:
             cursor = conn.cursor()
             
             from datetime import timedelta
-            threshold = (datetime.utcnow() - timedelta(days=days)).isoformat() + 'Z'
+            threshold = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
             
             cursor.execute('''
                 SELECT * FROM summaries 
@@ -374,7 +374,7 @@ class DatabaseManager:
                 INSERT INTO kb_entries (timestamp, category, title, content, tags, relations, approved)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (
-                entry.get('timestamp', datetime.utcnow().isoformat() + 'Z'),
+                entry.get('timestamp', datetime.now(timezone.utc).isoformat()),
                 entry.get('category'),
                 entry.get('title'),
                 entry.get('content'),

@@ -16,7 +16,7 @@ from watchdog.events import FileSystemEventHandler, FileSystemEvent
 class FileWatcher:
     """Watches file system for relevant changes"""
     
-    def __init__(self, capture_queue: Queue, config: Dict):
+    def __init__(self, capture_queue: Queue, config: Dict, base_path=None):
         self.capture_queue = capture_queue
         self.config = config
         self.running = False

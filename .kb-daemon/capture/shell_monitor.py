@@ -17,11 +17,12 @@ import re
 class ShellMonitor:
     """Monitors shell commands and captures important activities"""
     
-    def __init__(self, capture_queue: Queue, config: Dict):
+    def __init__(self, capture_queue: Queue, config: Dict, base_path=None):
         self.capture_queue = capture_queue
         self.config = config
         self.running = False
-        self.events_file = Path.home() / ".kb-daemon" / "capture" / "shell_events.jsonl"
+        self.base_path = base_path or Path.home()
+        self.events_file = self.base_path / "capture" / "shell_events.jsonl"
         self.events_file.parent.mkdir(parents=True, exist_ok=True)
         
         # Track command patterns
@@ -47,11 +48,16 @@ class ShellMonitor:
     def _install_shell_integration(self):
         """Install shell integration for command capture"""
         # Create the command wrapper script
-        wrapper_script = Path.home() / ".kb-daemon" / "shell_wrapper.sh"
-        wrapper_content = '''#!/bin/bash
+        wrapper_script = self.base_path / "shell_wrapper.sh"
+        capture_dir = self.base_path / "capture"
+        
+        wrapper_content = f'''#!/bin/bash
 # KB Daemon Shell Wrapper
 
-kb_capture_command() {
+# Set capture directory
+export KB_CAPTURE_DIR="{capture_dir}"
+
+kb_capture_command() {{
     local cmd="$1"
     shift
     local args="$@"
@@ -69,52 +75,52 @@ kb_capture_command() {
     
     # Create event JSON
     cat > /tmp/kb_event_$$.json <<EOF
-{
+{{
     "type": "shell_command",
     "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-    "data": {
+    "data": {{
         "command": "$cmd",
         "args": "$args",
         "exit_code": $exit_code,
         "duration": $duration,
         "working_dir": "$working_dir"
-    }
-}
+    }}
+}}
 EOF
     
     # Append to events file
-    cat /tmp/kb_event_$$.json >> ~/.kb-daemon/capture/shell_events.jsonl
+    cat /tmp/kb_event_$$.json >> "$KB_CAPTURE_DIR/shell_events.jsonl"
     rm /tmp/kb_event_$$.json
     
     return $exit_code
-}
+}}
 
 # Alias tracked commands
 KB_TRACK_COMMANDS=(npm yarn pnpm cargo pytest python node docker kubectl terraform ansible make)
 
-for cmd in "${KB_TRACK_COMMANDS[@]}"; do
+for cmd in "${{KB_TRACK_COMMANDS[@]}}"; do
     if command -v "$cmd" > /dev/null 2>&1; then
         alias $cmd="kb_capture_command $cmd"
     fi
 done
 
 # Enhanced prompt command for context
-kb_prompt_command() {
+kb_prompt_command() {{
     # Capture directory changes
     if [ "$PWD" != "$OLDPWD" ]; then
-        echo '{"type":"dir_change","timestamp":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'","data":{"from":"'$OLDPWD'","to":"'$PWD'"}}' >> ~/.kb-daemon/capture/shell_events.jsonl
+        echo '{{"type":"dir_change","timestamp":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'","data":{{"from":"'$OLDPWD'","to":"'$PWD'"}}}}' >> "$KB_CAPTURE_DIR/shell_events.jsonl"
     fi
-}
+}}
 
 # Add to PROMPT_COMMAND
-export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }kb_prompt_command"
+export PROMPT_COMMAND="${{PROMPT_COMMAND:+$PROMPT_COMMAND; }}kb_prompt_command"
 '''
         
         wrapper_script.write_text(wrapper_content)
         wrapper_script.chmod(0o755)
         
         # Create shell integration installer
-        installer = Path.home() / ".kb-daemon" / "install_shell.sh"
+        installer = self.base_path / "install_shell.sh"
         installer_content = f'''#!/bin/bash
 # KB Daemon Shell Integration Installer
 
