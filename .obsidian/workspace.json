@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "e54421e1a32a95d8",
+        "id": "4f15f98e62c95644",
         "type": "tabs",
         "children": [
           {
-            "id": "806e42d79d926e93",
+            "id": "a7b7e9211467a256",
             "type": "leaf",
             "state": {
               "type": "graph",
@@ -148,15 +148,22 @@
   "left-ribbon": {
     "hiddenItems": {
       "switcher:Open quick switcher": false,
+      "3d-graph:3D Graph": false,
       "graph:Open graph view": false,
       "canvas:Create new canvas": false,
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
-      "command-palette:Open command palette": false
+      "command-palette:Open command palette": false,
+      "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "806e42d79d926e93",
+  "active": "a7b7e9211467a256",
   "lastOpenFiles": [
+    "2025-08-18.md",
+    "Excalidraw/Drawing 2025-08-18 03.17.52.excalidraw.md",
+    "Excalidraw/Drawing 2025-08-18 03.17.24.excalidraw.md",
+    "Excalidraw",
+    "Untitled.canvas",
     "COMMIT_MESSAGE.md",
     "cleanup.sh",
     "tools/terraform-configuration-guide.md",
@@ -174,7 +181,6 @@
     "tools/claude-code-setup.md",
     "BASIC_MEMORY_TESTS.md",
     "QUICK_REFERENCE.md",
-    "Untitled.canvas",
     "tools/COMPLETE_SETUP_GUIDE.md",
     "projects/kb-enhancement-roadmap.md",
     "projects/database-patterns-and-best-practices.md",
@@ -184,7 +190,6 @@
     "tools/tools-index.md",
     "projects/kb-command-progress.md",
     "Untitled 2.canvas",
-    "Untitled 1.canvas",
-    "2025-08-06.md"
+    "Untitled 1.canvas"
   ]
 }
