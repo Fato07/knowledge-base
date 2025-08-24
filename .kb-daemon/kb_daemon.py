@@ -8,6 +8,7 @@ import sys
 import json
 import sqlite3
 import logging
+import signal
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
@@ -26,6 +27,7 @@ from capture.file_watcher import FileWatcher
 from capture.project_detector import ProjectDetector
 from process.categorizer import ActivityCategorizer
 from process.summarizer import Summarizer
+from process.process_manager import ProcessManager
 from storage.db_manager import DatabaseManager
 from interface.cli import CLI
 
@@ -55,6 +57,9 @@ class KBDaemon:
         self.project_detector = ProjectDetector(self.base_path)
         self.current_project = None
         
+        # Initialize process manager
+        self.process_manager = ProcessManager(self.base_path)
+        
         self.running = False
         
     def _load_config(self) -> Dict:
@@ -79,8 +84,16 @@ class KBDaemon:
         
     def start(self):
         """Start the daemon"""
-        self.logger.info("Starting KB Daemon...")
+        # Save PID when running in foreground mode
+        # (background mode saves PID in the parent process)
+        self.process_manager.save_pid(os.getpid())
+        
+        self.logger.info(f"Starting KB Daemon (PID: {os.getpid()})...")
         self.running = True
+        
+        # Set up signal handlers for graceful shutdown
+        signal.signal(signal.SIGTERM, self._signal_handler)
+        signal.signal(signal.SIGINT, self._signal_handler)
         
         # Start capture threads
         threads = [
@@ -102,12 +115,19 @@ class KBDaemon:
             self.stop()
     
     def stop(self):
-        """Stop the daemon"""
+        """Stop the daemon gracefully"""
         self.logger.info("Stopping KB Daemon...")
         self.running = False
         self.shell_monitor.stop()
         self.file_watcher.stop()
+        self.process_manager.cleanup()
         self.logger.info("KB Daemon stopped")
+    
+    def _signal_handler(self, signum, frame):
+        """Handle shutdown signals"""
+        self.logger.info(f"Received signal {signum}, shutting down...")
+        self.stop()
+        sys.exit(0)
         
     def process_queue(self):
         """Process captured events periodically"""
@@ -210,32 +230,71 @@ def main():
     parser.add_argument('command', choices=['start', 'stop', 'status', 'review', 'test', 'full'],
                        help='Command to execute')
     parser.add_argument('--config', help='Path to config file')
+    parser.add_argument('--foreground', action='store_true', help="Run in foreground (don't daemonize)")
     
     args = parser.parse_args()
     
     if args.command == 'start':
-        daemon = KBDaemon(args.config)
-        daemon.start()
+        if args.foreground:
+            # Run in foreground (for debugging)
+            daemon = KBDaemon(args.config)
+            daemon.start()
+        else:
+            # Daemonize the process
+            import subprocess
+            import sys
+            from process.process_manager import ProcessManager
+            
+            # Check if already running
+            manager = ProcessManager(Path(__file__).parent)
+            if manager.is_running():
+                pid = manager.get_pid()
+                print(f"⚠️  KB Daemon already running (PID: {pid})")
+                sys.exit(1)
+            
+            print("🚀 Starting KB Daemon in background...")
+            
+            # Start daemon in background
+            process = subprocess.Popen(
+                [sys.executable, __file__, 'start', '--foreground'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True
+            )
+            
+            # Save PID
+            manager.save_pid(process.pid)
+            
+            # Wait a moment to check if it started successfully
+            import time
+            time.sleep(2)
+            
+            if manager.is_running():
+                print(f"✅ KB Daemon started (PID: {process.pid})")
+                print("   Run 'kb status' to check status")
+                print("   Run 'kb stop' to stop the daemon")
+            else:
+                print("❌ Failed to start daemon")
+                # Try to get error output
+                stderr = process.stderr.read() if process.stderr else None
+                if stderr:
+                    print(f"   Error: {stderr.decode()}")
+                sys.exit(1)
     elif args.command == 'stop':
-        # TODO: Implement proper daemon stop via PID file
-        print("Stop command not yet implemented")
+        # Stop the daemon using process manager
+        from process.process_manager import ProcessManager
+        manager = ProcessManager(Path(__file__).parent)
+        manager.stop_daemon()
     elif args.command == 'status':
-        # Check if daemon is running
-        daemon_running = False
-        try:
-            import psutil
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                if proc.info['cmdline'] and 'kb_daemon.py' in ' '.join(proc.info['cmdline']) and 'start' in ' '.join(proc.info['cmdline']):
-                    daemon_running = True
-                    break
-        except ImportError:
-            # If psutil not installed, use subprocess
-            result = subprocess.run(['pgrep', '-f', 'kb_daemon.py'], capture_output=True, text=True)
-            daemon_running = bool(result.stdout.strip())
-        except Exception:
-            # Fallback to subprocess if psutil fails
-            result = subprocess.run(['pgrep', '-f', 'kb_daemon.py'], capture_output=True, text=True)
-            daemon_running = bool(result.stdout.strip())
+        # Use process manager for accurate status
+        from process.process_manager import ProcessManager
+        manager = ProcessManager(Path(__file__).parent)
+        
+        # Get daemon status
+        status = manager.get_status()
+        daemon_running = status['running']
+        pid = status.get('pid')
         
         # Get database statistics
         base_path = Path(__file__).parent
@@ -245,7 +304,11 @@ def main():
         # Display status
         print("📈 KB Daemon Status")
         if daemon_running:
-            print("✅ Daemon is running")
+            print(f"✅ Daemon is running (PID: {pid})")
+            if status.get('memory_usage'):
+                print(f"   Memory: {status['memory_usage']:.1f} MB")
+            if status.get('cpu_percent') is not None:
+                print(f"   CPU: {status['cpu_percent']:.1f}%")
         else:
             print("○ Daemon is not running")
         
